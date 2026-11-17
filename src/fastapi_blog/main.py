@@ -1,3 +1,5 @@
+from xml.etree.ElementInclude import include
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -19,8 +21,8 @@ posts = [{
    }
 ]
 
-@app.get("/", response_class=HTMLResponse)
-@app.get("/posts", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/posts", response_class=HTMLResponse, include_in_schema=False)
 def read_root():
     return """
     <html>
