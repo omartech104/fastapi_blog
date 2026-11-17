@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 
@@ -18,10 +19,20 @@ posts = [{
    }
 ]
 
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to the FastAPI Blog!"}
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    return """
+    <html>
+        <head>
+            <title>FastAPI Blog</title>
+        </head>
+        <body>
+            <h1>Welcome to the FastAPI Blog!</h1>
+            <p>Use the /api/posts endpoint to get the list of blog posts.</p>
+        </body>
+    </html>
+    """
 
 @app.get("/api/posts")
-async def get_posts():
+def get_posts():
     return posts
