@@ -20,6 +20,7 @@ posts = [{
 ]
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/posts", response_class=HTMLResponse)
 def read_root():
     return """
     <html>
