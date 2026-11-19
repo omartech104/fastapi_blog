@@ -1,9 +1,10 @@
-from xml.etree.ElementInclude import include
+from tempfile import template
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
 # Sample data for blog posts to test the get end point
 posts = [{
@@ -21,8 +22,8 @@ posts = [{
    }
 ]
 
-@app.get("/", response_class=HTMLResponse, include_in_schema=False)
-@app.get("/posts", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/", include_in_schema=False)
+@app.get("/posts", include_in_schema=False)
 def read_root():
     return """
     <html>
