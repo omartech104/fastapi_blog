@@ -24,18 +24,8 @@ posts = [{
 
 @app.get("/", include_in_schema=False)
 @app.get("/posts", include_in_schema=False)
-def read_root():
-    return """
-    <html>
-        <head>
-            <title>FastAPI Blog</title>
-        </head>
-        <body>
-            <h1>Welcome to the FastAPI Blog!</h1>
-            <p>Use the /api/posts endpoint to get the list of blog posts.</p>
-        </body>
-    </html>
-    """
+def read_root(request: Request):
+    return templates.TemplateResponse(request, "home.html")
 
 @app.get("/api/posts")
 def get_posts():
