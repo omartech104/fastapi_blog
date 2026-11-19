@@ -28,8 +28,8 @@ posts = [
 ]
 
 
-@app.get("/", include_in_schema=False)
-@app.get("/posts", include_in_schema=False)
+@app.get("/", include_in_schema=False, name="read_root")
+@app.get("/posts", include_in_schema=False, name="posts")
 def read_root(request: Request):
     return templates.TemplateResponse(
         request, "home.html", {"posts": posts, "title": "Home"}
