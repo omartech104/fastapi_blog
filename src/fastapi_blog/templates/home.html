@@ -3,9 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastAPI Blog</title>
+    <title>
+        {%if title %}
+            FastAPI Blog - {{ title }}
+        {% else %}
+            FastAPI Blog
+        {% endif %}
+    </title>
 </head>
 <body>
-    <p>Hey, welcome to the FastAPI Blog!</p>
+    <h1>FastAPI Blog</h1>
+    <ul>
+        {% for post in posts %}
+            <li>{{ post.title }} - {{ post.content }}</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
