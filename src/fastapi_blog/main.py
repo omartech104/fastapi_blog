@@ -8,6 +8,12 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from .schemas import PostCreate, PostResponse
 from typing import Annotated
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from . import models
+from .db import Base, engine, get_db
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
