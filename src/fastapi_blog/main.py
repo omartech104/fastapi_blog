@@ -1,17 +1,20 @@
 from pathlib import Path
 
-from fastapi import FastAPI, Request, HTTPException, status
+from fastapi import FastAPI, Request, HTTPException, status, Depends
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from .schemas import PostCreate, PostResponse
+from typing import Annotated
 
 app = FastAPI()
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
-app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+app.mount(
+    "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
+)
 
 # Sample data for blog posts to test the get end point
 posts = [
@@ -40,7 +43,6 @@ def read_root(request: Request):
     )
 
 
-
 @app.get("/posts/{post_id}", include_in_schema=False)
 def post_page(request: Request, post_id: int):
     for post in posts:
@@ -54,11 +56,9 @@ def post_page(request: Request, post_id: int):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
 
-
 @app.get("/api/posts", response_model=list[PostResponse])
 def get_posts():
     return posts
-
 
 
 @app.get("/api/posts/{post_id}", response_model=PostResponse)
@@ -67,7 +67,6 @@ def get_posts_using_id(post_id: int):
         if post["id"] == post_id:
             return post
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-
 
 
 @app.post(
@@ -86,7 +85,6 @@ def create_post(post: PostCreate):
     }
     posts.append(new_post)
     return new_post
-
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -113,6 +111,7 @@ def general_http_exception_handler(request: Request, exception: StarletteHTTPExc
         },
         status_code=exception.status_code,
     )
+
 
 @app.exception_handler(RequestValidationError)
 def validation_exception_handler(request: Request, exception: RequestValidationError):
