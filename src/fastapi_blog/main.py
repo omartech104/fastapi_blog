@@ -28,9 +28,13 @@ app.mount(
 
 @app.get("/", include_in_schema=False, name="read_root")
 @app.get("/posts", include_in_schema=False, name="posts")
-def read_root(request: Request):
+def read_root(request: Request, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.Post))
+    posts = result.scalars().all()
     return templates.TemplateResponse(
-        request, "home.html", {"posts": posts, "title": "Home"}
+        request,
+        "home.html",
+        {"posts": posts, "title": "Home"}
     )
 
 
