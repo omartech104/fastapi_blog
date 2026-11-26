@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from .schemas import PostCreate, PostResponse
+from .schemas import PostCreate, PostResponse, UserResponse, UserCreate
 from typing import Annotated
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -21,24 +21,9 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 app.mount(
     "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
 )
-
-# Sample data for blog posts to test the get end point
-posts = [
-    {
-        "id": 1,
-        "author": "Omar Mohammed",
-        "title": "First Post",
-        "content": "This is the content of the first post.",
-        "date_posted": "2023-06-01",
-    },
-    {
-        "id": 2,
-        "author": "Omar Mohammed",
-        "title": "Second Post",
-        "content": "This is the content of the second post.",
-        "date_posted": "2026-06-02",
-    },
-]
+app.mount(
+    "/media", StaticFiles(directory=Path(__file__).parent / "media"), name="media"
+)
 
 
 @app.get("/", include_in_schema=False, name="read_root")
@@ -61,18 +46,66 @@ def post_page(request: Request, post_id: int):
             )
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
+@app.post(
+    "/api/users",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.username == user.username))
+    existing_user = result.scalars().first()
+    
+    if existing_user:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Username already exists")
+    
+    result = db.execute(select(models.User).where(models.User.email == user.email))
+    existing_email = result.scalars().first()
+    
+    if existing_email:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Email already exists")
+    
+    new_user = models.User(
+        username=user.username,
+        email=user.email
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    return new_user
+
+@app.get("/api/users/{user_id}/posts", response_model=UserResponse)
+def get_users_posts(user_id: int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user is not found")
+    
+    result = db.execute(select(models.Post).where(models.Post.user_id == user_id))
+    posts=result.scalars().all()
+    return posts
+    
+
+@app.get("/api/users/{user_id}", response_model=UserResponse)
+def get_users(user_id: int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.id == user_id))
+    user = result.scalars().first()
+    if user:
+        return user
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user is not found")
 
 @app.get("/api/posts", response_model=list[PostResponse])
 def get_posts():
-    return posts
+    pass
 
 
 @app.get("/api/posts/{post_id}", response_model=PostResponse)
 def get_posts_using_id(post_id: int):
-    for post in posts:
-        if post["id"] == post_id:
-            return post
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    # for post in posts:
+    #     if post["id"] == post_id:
+    #         return post
+    # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    pass
 
 
 @app.post(
@@ -80,16 +113,17 @@ def get_posts_using_id(post_id: int):
     response_model=PostResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_post(post: PostCreate):
-    new_id = max(p["id"] for p in posts) + 1 if posts else 1
-    new_post = {
-        "id": new_id,
-        "author": post.author,
-        "title": post.title,
-        "content": post.content,
-        "date_posted": "2026-11-2",
-    }
-    posts.append(new_post)
+def create_post(post: PostCreate, db: Annotated[Session, Depends(get_db)]):
+    new_post = models.Post(
+        title=post.title,
+        content=post.content,
+        author=post.author
+    )
+    
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+    
     return new_post
 
 
